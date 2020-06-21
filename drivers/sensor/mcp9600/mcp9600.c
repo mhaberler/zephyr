@@ -19,7 +19,6 @@
 
 LOG_MODULE_REGISTER(MCP9600, CONFIG_SENSOR_LOG_LEVEL);
 
-
 static int mcp9600_reg_read(struct mcp9600_data *data, u8_t start, void *buf,
 			   int size)
 {
@@ -34,15 +33,13 @@ static int mcp9600_reg_write(struct mcp9600_data *data, u8_t reg, u8_t val)
 	return 0;
 }
 
-static int mcp9600_available(struct device *dev) {
-	struct mcp9600_data *data = dev->driver_data;
+static int mcp9600_available(struct device *dev)
+{
   u8_t status;
 
-#if 1
-  if (mcp9600_reg_read(data, MCP9600_SENSOR_STATUS, &status, 1) < 0) {
-    LOG_ERR("error reading status register");
+  if (mcp9600_reg_read(dev->driver_data, MCP9600_SENSOR_STATUS, &status, 1) < 0) {
+		return 0;
   }
-#endif
   if (status & MCP9600_SENSOR_STATUS_RDY_MASK) {
     return 1;
   } else {
@@ -90,13 +87,9 @@ static int mcp9600_attr_set(struct device *dev, enum sensor_channel chan,
 
         switch (attr) {
         // case SENSOR_ATTR_FULL_SCALE:
-				//
         //         return 0;
-				//
         // case SENSOR_ATTR_SAMPLING_FREQUENCY:
-				//
         //         return 0;
-
         default:
                 return -ENOTSUP;
         }
@@ -119,13 +112,13 @@ int mcp9600_init(struct device *dev)
 		LOG_DBG("%s: i2c master not found: %s", dev->name, data->i2c_bus);
 		return -EINVAL;
 	}
-#if 1
+
 	u16_t id;
 	if (mcp9600_reg_read(data, MCP9600_DEVICE_ID, &id, sizeof(id)) < 0) {
 		LOG_DBG("%s: Failed to read device ID register.", dev->name);
 		return -EIO;
 	}
-        id = sys_be16_to_cpu(id);
+	id = sys_be16_to_cpu(id);
 	data->revision = (id & 0x00ff);
 	u8_t device_id = (id >> 8);
 	if (device_id != MCP9600_DEV_ID_UPPER) {
@@ -134,12 +127,14 @@ int mcp9600_init(struct device *dev)
 				data->i2c_slave_addr, device_id);
 				return -ENODEV;
 	}
-#endif
- 	rc = mcp9600_available(dev);
 
-
-	printf("%s: revision=0x%x available=%d\n", dev->name, data->revision, rc  );
+	printf("%s: revision=0x%x\n", dev->name, data->revision);
 	LOG_DBG("%s: revision=0x%x\n", dev->name, data->revision);
+
+	if (!mcp9600_available(dev)) {
+		LOG_DBG("%s: device unavailable", dev->name);
+		return -ENODEV;
+	}
 	return 0;
 }
 
