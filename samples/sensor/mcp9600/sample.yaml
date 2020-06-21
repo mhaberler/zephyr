@@ -1,0 +1,8 @@
+sample:
+  name: MCP9600 Thermocouple converter
+tests:
+  sample.sensor.mcp9600:
+    harness: sensor
+    tags: sensors
+    depends_on: i2c
+    filter: dt_compat_enabled("microchip,mcp9600")
