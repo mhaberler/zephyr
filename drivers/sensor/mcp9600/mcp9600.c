@@ -50,6 +50,7 @@ static int mcp9600_sample_fetch(struct device *dev, enum sensor_channel chan)
 
 	switch (chan) {
 	case SENSOR_CHAN_AMBIENT_TEMP:
+        case SENSOR_CHAN_ALL:
 
 		if ((rc = mcp9600_reg_read(dev->driver_data, MCP9600_SENSOR_STATUS,
 			 &status, 1)) < 0) {
@@ -74,7 +75,9 @@ static int mcp9600_sample_fetch(struct device *dev, enum sensor_channel chan)
 			(MCP9600_RESOLUTION << 5) |
 			(MCP9600_BURST_SAMPLES << 2) |
 			(MCP9600_SHUTDOWN_MODE & 3));
-		return 0;
+		if (chan == SENSOR_CHAN_AMBIENT_TEMP)
+                  return 0;
+                // fall through
 
 	case SENSOR_CHAN_DIE_TEMP:
 		if ((rc = mcp9600_reg_read(dev->driver_data, MCP9600_COLD_JUNC_TEMP,
